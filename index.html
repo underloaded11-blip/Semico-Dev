@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eaglercraft Live Server & WSS Builder</title>
+    <title>Eaglercraft Server & GitHub Agent Studio</title>
     <style>
         :root {
-            --bg: #0b0f19;
-            --card: #111827;
+            --bg: #090d16;
+            --panel: #111827;
             --accent: #38bdf8;
             --accent-hover: #0ea5e9;
             --text: #f3f4f6;
             --muted: #9ca3af;
-            --border: #374151;
-            --success: #10b981;
+            --border: #1f2937;
+            --success: #22c55e;
         }
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
@@ -26,7 +26,7 @@
         }
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 850px;
         }
         header {
             text-align: center;
@@ -37,7 +37,7 @@
             margin-bottom: 5px;
         }
         .card {
-            background-color: var(--card);
+            background-color: var(--panel);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 20px;
@@ -50,10 +50,12 @@
             padding-bottom: 8px;
             color: var(--accent);
         }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .row {
+            display: flex;
             gap: 15px;
+        }
+        .col {
+            flex: 1;
         }
         .field {
             margin-bottom: 12px;
@@ -64,7 +66,7 @@
             color: var(--muted);
             margin-bottom: 4px;
         }
-        input, select {
+        input {
             width: 100%;
             padding: 9px 12px;
             background-color: var(--bg);
@@ -85,8 +87,20 @@
             font-family: monospace;
             word-break: break-all;
             color: var(--accent);
-            font-size: 1.05rem;
+            font-size: 1rem;
             margin-top: 6px;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            box-sizing: border-box;
         }
         button {
             background-color: var(--accent);
@@ -100,109 +114,86 @@
             margin-top: 8px;
             transition: background 0.15s;
         }
-        button:hover {
-            background-color: var(--accent-hover);
-        }
-        .btn-green {
-            background-color: var(--success);
-            color: #fff;
-        }
-        textarea {
-            width: 100%;
-            height: 100px;
-            background: var(--bg);
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 0.8rem;
-            box-sizing: border-box;
-        }
+        button:hover { background-color: var(--accent-hover); }
+        .btn-green { background-color: var(--success); color: #fff; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>Eaglercraft Live WSS Generator & Server Configurator</h1>
-        <p style="color: var(--muted);">Build functional WebSocket endpoints and generate the proxy setup files required to make your server run.</p>
+        <h1>Eaglercraft Server Generator</h1>
+        <p style="color: var(--muted);">Generate production-ready WSS connection streams and automated GitHub Agent configurations.</p>
     </header>
 
     <div class="card">
-        <h2>1. Live WebSocket (`wss://`) Generator</h2>
-        <div class="grid">
-            <div class="field">
-                <label for="host">Tunnel Host / Domain (e.g., ngrok or cloudflare)</label>
-                <input type="text" id="host" placeholder="e.g., play.my-server.com" oninput="buildServerFiles()">
+        <h2>1. Active WebSocket (`wss://`) Configurator</h2>
+        <div class="row">
+            <div class="col field">
+                <label for="tunnelHost">Tunnel / Proxy Host (e.g., ngrok, cloudflare)</label>
+                <input type="text" id="tunnelHost" placeholder="e.g.,play.my-eagler.com" oninput="compileServerData()">
             </div>
-            <div class="field">
-                <label for="port">WebSocket Listen Port</label>
-                <input type="text" id="port" value="8081" oninput="buildServerFiles()">
+            <div class="col field">
+                <label for="serverPort">WebSocket Port</label>
+                <input type="text" id="serverPort" value="8081" oninput="compileServerData()">
             </div>
         </div>
         <div class="field" style="margin-top: 10px;">
-            <label>Your Client-Ready Eaglercraft Connection String:</label>
+            <label>Generated Browser Client `wss://` Link:</label>
             <div class="output-box" id="wssResult">wss://enter-host-above.com:8081</div>
         </div>
-        <button onclick="navigator.clipboard.writeText(document.getElementById('wssResult').innerText); alert('WSS Link copied!');">Copy WSS Link</button>
+        <button onclick="copyElementText('wssResult', 'WSS URL copied!')">Copy WSS Link</button>
     </div>
 
     <div class="card">
-        <h2>2. Server Proxy Configuration (`listeners.yml`)</h2>
-        <p style="color: var(--muted); font-size: 0.85rem;">Paste this inside your `plugins/EaglercraftXServer/` or Bungeecord directory to accept incoming browser traffic.</p>
-        <textarea id="configOutput" readonly></textarea>
-        <button class="btn-green" onclick="navigator.clipboard.writeText(document.getElementById('configOutput').value); alert('Config copied!');">Copy Plugin Configuration</button>
-    </div>
-
-    <div class="card">
-        <h2>3. Automated GitHub Action Agent</h2>
-        <p style="color: var(--muted); font-size: 0.85rem;">Save as `.github/workflows/eagler-agent.yml` in your GitHub repo to continuously test and check your server build architecture.</p>
+        <h2>2. Automated GitHub Agent Workflow (`.github/workflows/eagler-agent.yml`)</h2>
+        <p style="color: var(--muted); font-size: 0.85rem;">Paste this script inside your GitHub Repository to handle automated builds, config parsing, and proxy verification.</p>
         <textarea id="agentOutput" readonly></textarea>
-        <button onclick="navigator.clipboard.writeText(document.getElementById('agentOutput').value); alert('Agent workflow copied!');">Copy GitHub Workflow</button>
+        <button class="btn-green" onclick="copyElementText('agentOutput', 'GitHub Agent workflow copied!')">Copy GitHub Agent Workflow</button>
+    </div>
+
+    <div class="card">
+        <h2>3. Server Bridge Configuration (`listeners.yml`)</h2>
+        <p style="color: var(--muted); font-size: 0.85rem;">Place this inside your backend proxy routing directory (`plugins/EaglercraftXServer/`).</p>
+        <textarea id="configOutput" readonly></textarea>
+        <button onclick="copyElementText('configOutput', 'Listener configuration copied!')">Copy Bridge Configuration</button>
     </div>
 </div>
 
 <script>
-    function buildServerFiles() {
-        let host = document.getElementById('host').value.trim().replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '').replace(/\/$/, '');
-        let port = document.getElementById('port').value.trim() || '8081';
+    function compileServerData() {
+        let host = document.getElementById('tunnelHost').value.trim().replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '').replace(/\/$/, '');
+        let port = document.getElementById('serverPort').value.trim() || '8081';
         
-        let displayHost = host ? host : 'enter-host-above.com';
-        let wssUrl = `wss://${displayHost}`;
-        if (displayHost !== 'enter-host-above.com') {
+        let validHost = host ? host : 'enter-host-above.com';
+        let wssUrl = `wss://${validHost}`;
+        if (validHost !== 'enter-host-above.com') {
             wssUrl += `:${port}`;
         }
+        
         document.getElementById('wssResult').innerText = wssUrl;
 
-        // Generate dynamic listeners configuration
-        let configYaml = `# EaglercraftXServer / EaglerXBungee Listener Configuration\n` +
-                         `listeners:\n` +
-                         `  - address: '0.0.0.0:${port}'\n` +
-                         `    public-address: '${displayHost}:${port}'\n` +
-                         `    forced-hosts:\n` +
-                         `      - '${displayHost}'`;
-        document.getElementById('configOutput').value = configYaml;
-
-        // Generate Agent template
-        let agentYaml = `name: Eaglercraft Server Automation Agent\n\non: [push]\n\njobs:\n` +
-                        `  build-check:\n` +
-                        `    runs-on: ubuntu-latest\n` +
-                        `    steps:\n` +
-                        `      - uses: actions/checkout@v4\n` +
-                        `      - name: Set up Java 17\n` +
-                        `        uses: actions/setup-java@v4\n` +
-                        `        with:\n` +
-                        `          distribution: 'temurin'\n` +
-                        `          java-version: '17'\n` +
-                        `      - name: Verify Server Configs\n` +
-                        `        run: |\n` +
-                        `          echo "Checking Eaglercraft proxy targets for: ${displayHost}"\n` +
-                        `          ls -la plugins/ || echo "No plugins folder present yet."`;
+        // Compile GitHub Agent YML
+        let agentYaml = `name: Eaglercraft CI Server Agent\n\non:\n  push:\n    branches: [ "main", "master" ]\n  pull_request:\n    branches: [ "main", "master" ]\n\njobs:\n  build-and-verify:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout Repository\n        uses: actions/checkout@v4\n\n      - name: Set up JDK 17\n        uses: actions/setup-java@v4\n        with:\n          distribution: 'temurin'\n          java-version: '17'\n\n      - name: Verify Environment & Proxy Setup\n        run: |\n          echo "Target Host Resolved: ${validHost}"\n          echo "Target Port: ${port}"\n          mkdir -p plugins/EaglercraftXServer\n          echo "Checking directory layout..."\n          ls -la`;
         document.getElementById('agentOutput').value = agentYaml;
+
+        // Compile listener configuration
+        let listenerYaml = `# EaglercraftXServer Proxy Routing Specification\n` +
+                           `listeners:\n` +
+                           `  - address: '0.0.0.0:${port}'\n` +
+                           `    public-address: '${validHost}:${port}'\n` +
+                           `    forced-hosts:\n` +
+                           `      - '${validHost}'`;
+        document.getElementById('configOutput').value = listenerYaml;
     }
 
-    buildServerFiles();
+    function copyElementText(elementId, successMsg) {
+        let text = document.getElementById(elementId).innerText || document.getElementById(elementId).value;
+        navigator.clipboard.writeText(text);
+        alert(successMsg);
+    }
+
+    compileServerData();
 </script>
 
 </body>
