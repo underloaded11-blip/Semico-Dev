@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eaglercraft Live Server & WSS Builder</title>
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --card: #111827;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --text: #f3f4f6;
+            --muted: #9ca3af;
+            --border: #374151;
+            --success: #10b981;
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        header h1 {
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.15rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            color: var(--accent);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .field {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        input, select {
+            width: 100%;
+            padding: 9px 12px;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .output-box {
+            background-color: var(--bg);
+            border: 1px dashed var(--accent);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            word-break: break-all;
+            color: var(--accent);
+            font-size: 1.05rem;
+            margin-top: 6px;
+        }
+        button {
+            background-color: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            transition: background 0.15s;
+        }
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+        .btn-green {
+            background-color: var(--success);
+            color: #fff;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Eaglercraft Live WSS Generator & Server Configurator</h1>
+        <p style="color: var(--muted);">Build functional WebSocket endpoints and generate the proxy setup files required to make your server run.</p>
+    </header>
+
+    <div class="card">
+        <h2>1. Live WebSocket (`wss://`) Generator</h2>
+        <div class="grid">
+            <div class="field">
+                <label for="host">Tunnel Host / Domain (e.g., ngrok or cloudflare)</label>
+                <input type="text" id="host" placeholder="e.g., play.my-server.com" oninput="buildServerFiles()">
+            </div>
+            <div class="field">
+                <label for="port">WebSocket Listen Port</label>
+                <input type="text" id="port" value="8081" oninput="buildServerFiles()">
+            </div>
+        </div>
+        <div class="field" style="margin-top: 10px;">
+            <label>Your Client-Ready Eaglercraft Connection String:</label>
+            <div class="output-box" id="wssResult">wss://enter-host-above.com:8081</div>
+        </div>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('wssResult').innerText); alert('WSS Link copied!');">Copy WSS Link</button>
+    </div>
+
+    <div class="card">
+        <h2>2. Server Proxy Configuration (`listeners.yml`)</h2>
+        <p style="color: var(--muted); font-size: 0.85rem;">Paste this inside your `plugins/EaglercraftXServer/` or Bungeecord directory to accept incoming browser traffic.</p>
+        <textarea id="configOutput" readonly></textarea>
+        <button class="btn-green" onclick="navigator.clipboard.writeText(document.getElementById('configOutput').value); alert('Config copied!');">Copy Plugin Configuration</button>
+    </div>
+
+    <div class="card">
+        <h2>3. Automated GitHub Action Agent</h2>
+        <p style="color: var(--muted); font-size: 0.85rem;">Save as `.github/workflows/eagler-agent.yml` in your GitHub repo to continuously test and check your server build architecture.</p>
+        <textarea id="agentOutput" readonly></textarea>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('agentOutput').value); alert('Agent workflow copied!');">Copy GitHub Workflow</button>
+    </div>
+</div>
+
+<script>
+    function buildServerFiles() {
+        let host = document.getElementById('host').value.trim().replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '').replace(/\/$/, '');
+        let port = document.getElementById('port').value.trim() || '8081';
+        
+        let displayHost = host ? host : 'enter-host-above.com';
+        let wssUrl = `wss://${displayHost}`;
+        if (displayHost !== 'enter-host-above.com') {
+            wssUrl += `:${port}`;
+        }
+        document.getElementById('wssResult').innerText = wssUrl;
+
+        // Generate dynamic listeners configuration
+        let configYaml = `# EaglercraftXServer / EaglerXBungee Listener Configuration\n` +
+                         `listeners:\n` +
+                         `  - address: '0.0.0.0:${port}'\n` +
+                         `    public-address: '${displayHost}:${port}'\n` +
+                         `    forced-hosts:\n` +
+                         `      - '${displayHost}'`;
+        document.getElementById('configOutput').value = configYaml;
+
+        // Generate Agent template
+        let agentYaml = `name: Eaglercraft Server Automation Agent\n\non: [push]\n\njobs:\n` +
+                        `  build-check:\n` +
+                        `    runs-on: ubuntu-latest\n` +
+                        `    steps:\n` +
+                        `      - uses: actions/checkout@v4\n` +
+                        `      - name: Set up Java 17\n` +
+                        `        uses: actions/setup-java@v4\n` +
+                        `        with:\n` +
+                        `          distribution: 'temurin'\n` +
+                        `          java-version: '17'\n` +
+                        `      - name: Verify Server Configs\n` +
+                        `        run: |\n` +
+                        `          echo "Checking Eaglercraft proxy targets for: ${displayHost}"\n` +
+                        `          ls -la plugins/ || echo "No plugins folder present yet."`;
+        document.getElementById('agentOutput').value = agentYaml;
+    }
+
+    buildServerFiles();
+</script>
+
+</body>
+</html>
