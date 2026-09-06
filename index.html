@@ -1,14 +1,201 @@
 <!DOCTYPE html>
-<html>
-  <body>
-    <head lang="en">
-      <style>
-        body {
-          font-family: Sans-Serif;
-          color: blue
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eaglercraft WSS URL Generator & GitHub Agent</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
         }
-      </style>
-      <h1>Hi</h1>
-    </head>
-  </body>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .output-box {
+            background-color: var(--bg-color);
+            border: 1px dashed var(--accent);
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            word-break: break-all;
+            margin-top: 10px;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+        button {
+            background-color: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+        .btn-success {
+            background-color: var(--success);
+            color: #fff;
+        }
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+        .row .form-group {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Eaglercraft WSS Generator</h1>
+        <p style="color: var(--text-dim);">Format secure WebSocket URLs and configure your automated GitHub Agent workflows.</p>
+    </header>
+
+    <div class="card">
+        <h2>1. WebSocket URL Generator</h2>
+        <div class="row">
+            <div class="form-group">
+                <label for="domain">Domain / Hostname / Tunnel URL</label>
+                <input type="text" id="domain" placeholder="e.g., myserver.ngrok-free.app or repl.co" oninput="generateWss()">
+            </div>
+            <div class="form-group">
+                <label for="port">Custom Port (Optional)</label>
+                <input type="text" id="port" placeholder="e.g., 8081" oninput="generateWss()">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Generated Eaglercraft Connection String (`wss://`):</label>
+            <div class="output-box" id="wssOutput">wss://enter-domain-above.com</div>
+        </div>
+        <button onclick="copyWss()">Copy WSS Link</button>
+    </div>
+
+    <div class="card">
+        <h2>2. GitHub Agent Config Generator</h2>
+        <p style="color: var(--text-dim); font-size: 0.9rem;">Generate a GitHub Actions workflow snippet for your agent to automatically check and build your server proxy configurations.</p>
+        
+        <div class="form-group">
+            <label for="repoName">GitHub Repository Name</label>
+            <input type="text" id="repoName" placeholder="username/eaglercraft-server">
+        </div>
+        
+        <div class="form-group">
+            <label>Generated Workflow Code (.github/workflows/agent.yml):</label>
+            <textarea id="agentOutput" style="width:100%; height:120px; background:var(--bg-color); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:10px; font-family:monospace; font-size:0.85rem;" readonly></textarea>
+        </div>
+        <button class="btn-success" onclick="copyAgentConfig()">Copy GitHub Agent Workflow</button>
+    </div>
+</div>
+
+<script>
+    function generateWss() {
+        let domain = document.getElementById('domain').value.trim();
+        let port = document.getElementById('port').value.trim();
+        
+        // Strip out accidental protocols if pasted
+        domain = domain.replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '').replace(/\/$/, '');
+        
+        let finalUrl = domain ? `wss://${domain}` : `wss://enter-domain-above.com`;
+        if (port) {
+            finalUrl += `:${port}`;
+        }
+        
+        document.getElementById('wssOutput').innerText = finalUrl;
+        updateAgentConfig(domain);
+    }
+
+    function updateAgentConfig(domain) {
+        let repo = document.getElementById('repoName').value.trim() || 'your-username/your-repo';
+        let workflow = `name: Eaglercraft Server Agent\n\non: [push, pull_request]\n\njobs:\n  verify-proxy:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout code\n        uses: actions/checkout@v4\n\n      - name: Set up Java\n        uses: actions/setup-java@v4\n        with:\n          distribution: 'temurin'\n          java-version: '17'\n\n      - name: Validate Proxy Properties\n        run: |\n          echo "Validating Eaglercraft configuration for target: ${domain || 'localhost'}"\n          if [ -f "plugins/EaglercraftXBungee/config.yml" ] || [ -f "config.yml" ]; then\n            echo "Config file found!"\n          else\n            echo "Warning: No standard config.yml found."\n          fi`;
+        
+        document.getElementById('agentOutput').value = workflow;
+    }
+
+    function copyWss() {
+        let text = document.getElementById('wssOutput').innerText;
+        navigator.clipboard.writeText(text);
+        alert('Copied WSS URL to clipboard!');
+    }
+
+    function copyAgentConfig() {
+        let text = document.getElementById('agentOutput').value;
+        navigator.clipboard.writeText(text);
+        alert('Copied GitHub Agent workflow to clipboard!');
+    }
+
+    // Initialize fields on load
+    updateAgentConfig('');
+</script>
+
+</body>
 </html>
